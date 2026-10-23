@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>불닭 예약 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF6F0;--fg:#1C2A3A;--muted:#5B6878;--line:#F2D9CC;--soft:#FFE9DC;--sky:#2A6FD1;--coral:#D9453A;--leaf:#2E8B57;--fire:#E4432B;--fd:"Jua","Noto Sans KR",sans-serif;--fb:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--fb);font-size:16px;line-height:1.5;word-break:keep-all}
+h1,h2{font-family:var(--fd);font-weight:400;margin:0}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 48px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.top h1{font-size:24px}
+.conn{font-size:12px;color:var(--muted)}.conn i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#bbb;margin-right:4px}.conn.on i{background:var(--leaf)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 6px 20px rgba(80,30,0,.06)}
+.card h2{font-size:20px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.kpi div{background:var(--soft);border-radius:12px;padding:10px;text-align:center}
+.kpi b{font-family:var(--fd);font-size:26px;display:block}
+.kpi span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14.5px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:700}
+tr.w td{background:#FFF8E6}
+tr.att td:first-child::before{content:"✔ ";color:var(--leaf)}
+.pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700}
+.pill.c{background:#E8F5EC;color:var(--leaf)}.pill.w{background:#FFF3CF;color:#8A5A00}
+.b{border:0;border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:var(--soft);color:var(--fg)}
+.b.p{background:var(--sky);color:#fff}.b.up{background:var(--leaf);color:#fff}.b.x{background:#FDE3E0;color:var(--coral)}.b.a{background:var(--leaf);color:#fff}.b.a.off{background:#eee;color:#666}
+.btn{display:inline-block;border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;background:var(--fire);color:#fff}
+.btn.g{background:#fff;border:2px solid var(--line);color:var(--fg)}
+input{font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;width:100%}
+.small{font-size:12.5px;color:var(--muted)}
+.hide{display:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+td .acts{display:flex;gap:4px;flex-wrap:wrap}
+@media(max-width:480px){th:nth-child(4),td:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="gate" class="card" style="max-width:380px;margin:60px auto">
+    <h2>🌶️ 불닭 예약 관리자</h2>
+    <p class="small">운영요원 PIN을 입력하세요</p>
+    <input type="password" id="pin" inputmode="numeric" maxlength="8" placeholder="PIN">
+    <div class="row"><button class="btn" onclick="login()">들어가기</button></div>
+    <p class="small" id="g-err" style="color:var(--coral)"></p>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="top"><h1>🌶️ 불닭볶음면 천천히 먹기 · 예약 명단</h1><span class="conn" id="conn"><i></i>연결 확인 중</span></div>
+    <div class="row"><button class="btn g" onclick="load()">↻ 새로고침</button><button class="btn g" onclick="csv()">CSV 내려받기</button><label class="small" style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="auto" checked style="width:18px;height:18px"> 30초마다 자동 갱신</label></div>
+    <div id="rounds"></div>
+    <div class="card"><h2>사용법</h2><ul class="small" style="margin:6px 0 0;padding-left:18px"><li><b>출석</b>: 현장에 온 참가자 이름을 부르고 버튼을 누르면 ✔ 표시 (다시 누르면 해제)</li><li><b>승격</b>: 시작 시간이 지나도 안 온 참가자를 <b>취소</b>하고, 대기 1번을 <b>승격</b>하면 참가 확정으로 바뀜</li><li><b>직접 추가</b>: 현장에서 구두로 신청한 분은 각 회차의 「+ 현장 추가」로 등록 (정원·대기 규칙 동일)</li><li>개인정보는 행사 후 30일 내 파기 — CSV는 정산 후 삭제</li></ul></div>
+  </div>
+</div>
+
+<script>
+const CFG={URL:"https://snaldhxucwsaifqrccih.supabase.co",KEY:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuYWxkaHh1Y3dzYWlmcXJjY2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNzIwNjAsImV4cCI6MjEwMzg0ODA2MH0.TUdhun_cBHsool0e2FZOOfznjFoC_u5B0MJCl1dTDhI",PIN:"20240520",CAP:6,WCAP:3,ROUNDS:{"1":"1회 12:35","2":"2회 14:50"}};
+const $=id=>document.getElementById(id); const H={apikey:CFG.KEY,Authorization:"Bearer "+CFG.KEY,"Content-Type":"application/json"};
+async function api(path,opt){const r=await fetch(CFG.URL+"/rest/v1/"+path,Object.assign({headers:Object.assign({},H,{Prefer:"return=representation"})},opt||{})); if(!r.ok) throw new Error(await r.text()); const t=await r.text(); return t?JSON.parse(t):null;}
+let ROWS=[];
+function login(){ if($("pin").value===CFG.PIN){ sessionStorage.setItem("bd_pin","1"); $("gate").classList.add("hide"); $("app").classList.remove("hide"); load(); } else $("g-err").textContent="PIN이 달라요."; }
+if(sessionStorage.getItem("bd_pin")==="1"){ $("gate").classList.add("hide"); $("app").classList.remove("hide"); load(); }
+$("pin").addEventListener("keydown",e=>{ if(e.key==="Enter") login(); });
+const fmtp=p=>p.replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3");
+async function load(){
+  try{ ROWS=await api("bt_buldak?select=*&order=created_at.asc"); $("conn").className="conn on"; $("conn").innerHTML="<i></i>Supabase 연결"; }
+  catch(e){ $("conn").className="conn"; $("conn").innerHTML="<i></i>연결 실패"; return; }
+  $("rounds").innerHTML=Object.keys(CFG.ROUNDS).map(r=>{
+    const all=ROWS.filter(x=>x.round===r&&x.status!=="cancelled"); const c=all.filter(x=>x.status==="confirmed"), w=all.filter(x=>x.status==="waiting"), att=c.filter(x=>x.attended).length;
+    const tr=(x,i,wait)=>`<tr class="${wait?"w":""} ${x.attended?"att":""}"><td>${wait?"대기 "+(i+1):i+1}</td><td><b>${x.name}</b></td><td>${fmtp(x.phone)}</td><td class="small">${new Date(x.created_at).toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}</td><td><div class="acts">${wait?`<button class="b up" onclick="promote(${x.id})">승격</button>`:`<button class="b a ${x.attended?"":"off"}" onclick="attend(${x.id},${!x.attended})">${x.attended?"출석✔":"출석"}</button>`}<button class="b x" onclick="cancelRow(${x.id},'${x.name}')">취소</button></div></td></tr>`;
+    return `<div class="card"><h2>${CFG.ROUNDS[r]} <button class="b p" onclick="addRow('${r}')">+ 현장 추가</button></h2>
+      <div class="kpi"><div><b>${c.length}/${CFG.CAP}</b><span>참가 확정</span></div><div><b>${att}</b><span>출석</span></div><div><b>${w.length}/${CFG.WCAP}</b><span>대기</span></div></div>
+      <table><thead><tr><th>#</th><th>이름</th><th>휴대폰</th><th>신청</th><th></th></tr></thead><tbody>${c.map((x,i)=>tr(x,i,false)).join("")}${w.map((x,i)=>tr(x,i,true)).join("")}${all.length?"":'<tr><td colspan="5" class="small">아직 신청이 없어요</td></tr>'}</tbody></table></div>`;
+  }).join("");
+}
+async function attend(id,v){ await api("bt_buldak?id=eq."+id,{method:"PATCH",body:JSON.stringify({attended:v})}); load(); }
+async function promote(id){ const r=ROWS.find(x=>x.id===id); const c=ROWS.filter(x=>x.round===r.round&&x.status==="confirmed").length; if(c>=CFG.CAP&&!confirm(`정원 ${CFG.CAP}명이 이미 찼어요. 그래도 승격할까요?`)) return; await api("bt_buldak?id=eq."+id,{method:"PATCH",body:JSON.stringify({status:"confirmed"})}); load(); }
+async function cancelRow(id,name){ if(!confirm(`${name} 예약을 취소할까요?`)) return; await api("bt_buldak?id=eq."+id,{method:"PATCH",body:JSON.stringify({status:"cancelled",attended:false})}); load(); }
+async function addRow(r){ const name=prompt(`${CFG.ROUNDS[r]} 현장 추가 — 이름`); if(!name) return; const ph=(prompt("휴대폰 번호 (없으면 비워 두기)")||"").replace(/\D/g,"")||("0000"+Date.now().toString().slice(-7));
+  try{ const res=await (await fetch(CFG.URL+"/rest/v1/rpc/bt_buldak_reserve",{method:"POST",headers:H,body:JSON.stringify({p_round:r,p_name:name.trim(),p_phone:ph})})).json();
+    if(!res.ok) alert(res.err==="dup"?"이 번호는 이미 신청되어 있어요.":"이 회차는 대기까지 마감됐어요."); }catch(e){ alert("추가 실패: "+e.message); } load(); }
+function csv(){ const h=["회차","구분","순번","이름","휴대폰","출석","신청시각"]; const rows=[];
+  Object.keys(CFG.ROUNDS).forEach(r=>{ const c=ROWS.filter(x=>x.round===r&&x.status==="confirmed"), w=ROWS.filter(x=>x.round===r&&x.status==="waiting");
+    c.forEach((x,i)=>rows.push([CFG.ROUNDS[r],"참가",i+1,x.name,fmtp(x.phone),x.attended?"O":"",x.created_at])); w.forEach((x,i)=>rows.push([CFG.ROUNDS[r],"대기",i+1,x.name,fmtp(x.phone),"",x.created_at])); });
+  const txt="﻿"+[h,...rows].map(a=>a.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"})); a.download="불닭_예약명단.csv"; a.click(); }
+setInterval(()=>{ if($("auto").checked&&!$("app").classList.contains("hide")) load(); },30000);
+</script>
+</body>
+</html>
